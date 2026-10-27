@@ -1,3 +1,7 @@
+
+#define B 340 // se puede cambiar para probar arboles chicos!!
+#define INCREMENTO_CAPACIDAD 1024
+
 //btree
 //pares llave-valor: 
 //  -int: 4 bytes tiempo en el que se toma medición
@@ -13,7 +17,6 @@ typedef struct{
 // nodo --> tamaño fijo de 4096bytes
 //  nodo que permite un máximo de 𝑏 = 340 elementos en su interior
 
-#define B 340 // se puede cambiar para probar arboles chicos!!
 
 typedef struct{
     int es_interno; // 1 si es interno, 0 si es hoja
@@ -37,13 +40,15 @@ typedef struct{
     long long escrituras; // cantidad de escrituras realizadas
 } Btree;
 
+
+
 // Crear árbol vacio
 Btree* crear_btree() {
     Btree* btree = (Btree*)malloc(sizeof(Btree));
     btree->escrituras = 0;
     btree->lecturas = 0;
     btree->cantidad_nodos = 1;
-    btree->capacidad_nodos = 1;
+    btree->capacidad_nodos = INCREMENTO_CAPACIDAD;
 
     btree->nodos = (NodoBtree*)malloc(sizeof(NodoBtree));
 
@@ -51,4 +56,51 @@ Btree* crear_btree() {
     btree->nodos[0].k = 0; // sin elementos
     btree->nodos[0].padding = 0; // siempre vale 0
     return btree;
+}
+
+
+//leer_nodo
+// suma 1 a la cantidad de lecturas realizadas y retorna el nodo leido en posicion i
+// btree: puntero al arbol
+// i: posicion del nodo a leer
+// retorna una copia del nodo leido
+
+
+NodoBtree leer_nodo(Btree* btree, int i){
+    btree->lecturas++;
+    return btree->nodos[i];
+}
+
+//escribir_nodo
+// suma 1 a la cantidad de escrituras realizadas y escribe el nodo en posicion i reemplazando el que estaba en esa posiscion
+// btree: puntero al arbol
+// i : posicion del nodo a escribir
+// nodo: nodo a escribir
+
+void escribir_nodo(Btree* btree, int i, NodoBtree nodo){
+    btree->escrituras++;
+    btree->nodos[i] = nodo;
+}
+
+//agregar_nodo
+// agrega un nodo al final del arreglo de nodos del arbol
+// btree: puntero al arbol
+// nodo: nodo a agregar
+// retorna la posicion en la que se agrego el nodo
+
+
+int agregar_nodo(Btree* btree, NodoBtree nodo){
+    
+    if(btree->cantidad_nodos == btree->capacidad_nodos){
+        btree->capacidad_nodos += INCREMENTO_CAPACIDAD;
+        btree->nodos = realloc(btree->nodos, btree->capacidad_nodos * (sizeof(NodoBtree)));
+    }
+
+    int posicion = btree->cantidad_nodos;
+    btree->nodos[posicion] = nodo;
+
+    btree->escrituras += 1;
+    btree->cantidad_nodos += 1;
+
+    return posicion;
 }
