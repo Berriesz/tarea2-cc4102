@@ -1,9 +1,10 @@
 #ifndef BTREE_H
 #define BTREE_H
-
+#include <stdio.h>
 #include <stdlib.h>
 
-#define B 4 // se puede cambiar para probar arboles chicos!!
+
+#define B 340 // se puede cambiar para probar arboles chicos!!
 #define INCREMENTO_CAPACIDAD 1024
 
 // Par llave-valor:
@@ -44,4 +45,29 @@ int buscar_hijo(NodoBtree nodo, int llave);
 void insertar_en_padre(NodoBtree* padre, int i, ParLlaveValor mediano, int pos_der);
 void insertar_rec(Btree* btree, int pos, NodoBtree nodo, ParLlaveValor par);
 void insertar(Btree* btree, ParLlaveValor par);
+//guardar en archivo binario
+void guardar_btree(Btree* btree, const char* nombre_archivo);
+NodoBtree leer_nodo_archivo(FILE* archivo, int i, long long* lecturas);
+
+
+//Busqueda por rango
+
+int debo_bajar(NodoBtree nodo, int i, int l, int u);
+
+// Resultado
+// guarda los pares encontrados en una búsqueda por rango.
+// el arreglo pares crece solo a medida que se agregan pares (con agregar_resultado).
+// se debe liberar con liberar_resultado.
+typedef struct{
+    ParLlaveValor* pares; // pares encontrados
+    int cantidad; // cuántos pares hay
+    int capacidad; // cuántos pares caben antes de agrandar el arreglo
+} Resultado;
+
+void agregar_resultado(Resultado* res, ParLlaveValor par);
+void buscar_rec(FILE* archivo, int pos, int l, int u, Resultado* res, long long* lecturas);
+Resultado buscar_rango(const char* nombre_archivo, int l, int u, long long* lecturas);
+
+void liberar_btree(Btree* btree);
+void liberar_resultados(Resultado* res);
 #endif

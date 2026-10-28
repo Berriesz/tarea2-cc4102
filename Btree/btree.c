@@ -4,7 +4,11 @@
 
 
 
-// Crear árbol vacio
+// crear_btree
+// crea un árbol B vacío: pide memoria para INCREMENTO_CAPACIDAD nodos y deja
+// en la posición 0 una raíz que es una hoja sin pares.
+// los contadores de lecturas y escrituras parten en 0 (crear la raíz no se cuenta como escritura).
+// retorna: puntero al árbol creado (se debe liberar con liberar_btree)
 Btree* crear_btree() {
     Btree* btree = (Btree*)malloc(sizeof(Btree));
     btree->escrituras = 0;
@@ -27,7 +31,6 @@ Btree* crear_btree() {
 // i: posicion del nodo a leer
 // retorna una copia del nodo leido
 
-
 NodoBtree leer_nodo(Btree* btree, int i){
     btree->lecturas++;
     return btree->nodos[i];
@@ -49,8 +52,6 @@ void escribir_nodo(Btree* btree, int i, NodoBtree nodo){
 // btree: puntero al arbol
 // nodo: nodo a agregar
 // retorna la posicion en la que se agrego el nodo
-
-
 int agregar_nodo(Btree* btree, NodoBtree nodo){
     
     if(btree->cantidad_nodos == btree->capacidad_nodos){
@@ -61,8 +62,8 @@ int agregar_nodo(Btree* btree, NodoBtree nodo){
     int posicion = btree->cantidad_nodos;
     btree->nodos[posicion] = nodo;
 
-    btree->escrituras += 1;
-    btree->cantidad_nodos += 1;
+    btree->escrituras++;
+    btree->cantidad_nodos++;
 
     return posicion;
 }
@@ -80,6 +81,7 @@ int agregar_nodo(Btree* btree, NodoBtree nodo){
 // nodo_lleno: nodo a dividir
 // izq: nuevo nodo a la izquierda
 // der: nuevo nodo a la derecha
+//retorna el par mediano
 ParLlaveValor split(NodoBtree nodo_lleno, NodoBtree* izq, NodoBtree* der){
 
     int mediano = B/2 -1;
@@ -117,7 +119,10 @@ ParLlaveValor split(NodoBtree nodo_lleno, NodoBtree* izq, NodoBtree* der){
 /// Incersión de un par en nodo 3.4.2 ///
 
 // insertar_en_nodo
-
+// inserta un par en el nodo, manteniendo los pares ordenados por llave.
+// el nodo no debe estar lleno.
+// nodo: nodo donde se inserta
+// par: par a insertar
 void insertar_en_nodo(NodoBtree* nodo, ParLlaveValor par){
 
     int i = nodo->k - 1;
@@ -132,9 +137,11 @@ void insertar_en_nodo(NodoBtree* nodo, ParLlaveValor par){
 
 }
 
-// buscar hijo
-// Recibe el nodo interno y la llave a insertar, y devuelve el índice del hijo al que hay que bajar.
-
+// buscar_hijo
+// busca a qué hijo de un nodo interno hay que bajar para insertar una llave.
+// nodo: nodo interno
+// llave: llave que se quiere insertar
+// retorna: índice del hijo (posición en el arreglo hijos del nodo)
 int buscar_hijo(NodoBtree nodo, int llave){
 
     int i = 0;
@@ -170,7 +177,13 @@ void insertar_en_padre(NodoBtree* padre, int i, ParLlaveValor mediano, int pos_d
 
 }
 
-
+// insertar_rec
+// inserta un par bajando recursivamente desde un nodo hasta una hoja.
+// si el hijo al que hay que bajar está lleno, lo divide antes de entrar (split preventivo).
+// btree: puntero al árbol
+// pos: posición del nodo en el arreglo
+// nodo: copia del nodo, ya leída
+// par: par a insertar
 void insertar_rec(Btree* btree, int pos, NodoBtree nodo, ParLlaveValor par){
 
     if(!nodo.es_interno){
@@ -202,7 +215,11 @@ void insertar_rec(Btree* btree, int pos, NodoBtree nodo, ParLlaveValor par){
     }
     
 }
-
+// insertar
+// inserta un par en el árbol, partiendo desde la raíz.
+// si la raíz está llena, la divide y crea una nueva raíz en la posición 0.
+// btree: puntero al árbol
+// par: par a insertar
 void insertar(Btree* btree, ParLlaveValor par){
 
     NodoBtree raiz = leer_nodo(btree, 0);
@@ -233,4 +250,124 @@ void insertar(Btree* btree, ParLlaveValor par){
         insertar_rec(btree, pos_der, der, par);
     }
 
+}
+
+// guardar_btree
+// escribe todos los nodos del árbol, en orden, en un archivo binario.
+// el nodo de la posición i queda en el byte i * sizeof(NodoBtree) del archivo.
+// btree: puntero al árbol
+// nombre_archivo: nombre del archivo donde se guarda
+void guardar_btree(Btree* btree, const char* nombre_archivo){
+
+    FILE* archivo = fopen(nombre_archivo, "wb");
+    fwrite(btree->nodos, sizeof(NodoBtree), btree->cantidad_nodos, archivo);
+    fclose(archivo);
+}
+
+// leer_nodo_archivo
+// lee el nodo de la posición i desde el archivo binario (cuenta 1 lectura).
+// archivo: archivo binario abierto para lectura
+// i: posición del nodo
+// lecturas: contador de lecturas, se le suma 1
+// retorna: el nodo leído
+NodoBtree leer_nodo_archivo(FILE* archivo, int i, long long* lecturas){
+    NodoBtree nodo;
+    fseek(archivo, i*sizeof(NodoBtree), SEEK_SET);
+    fread(&nodo, sizeof(NodoBtree), 1, archivo);
+
+    (*lecturas)++;
+    return nodo;
+}
+// debo_bajar
+// revisa si el hijo i de un nodo interno puede tener llaves dentro del rango [l, u].
+// considera llaves repetidas: el hijo i puede tener llaves iguales a las de sus extremos.
+// nodo: nodo interno
+// i: índice del hijo
+// l: inicio del rango
+// u: fin del rango
+// retorna: 1 si hay que bajar al hijo, 0 si no
+int debo_bajar(NodoBtree nodo, int i, int l, int u){
+    int izq = (i == 0) || (nodo.llaves_valores[i-1].llave <= u);
+    int der = (i == nodo.k) || (nodo.llaves_valores[i].llave >= l);
+    return izq && der;
+}
+
+// agregar_resultado
+// agrega un par al final del resultado de una búsqueda, agrandando el arreglo si está lleno.
+// res: puntero al resultado
+// par: par a agregar
+void agregar_resultado(Resultado* res, ParLlaveValor par){
+    if(res->cantidad == res -> capacidad){
+        res->capacidad += INCREMENTO_CAPACIDAD;
+        res->pares = realloc(res->pares, res->capacidad*(sizeof(ParLlaveValor)));
+    }
+
+    int posicion = res->cantidad;
+    res->pares[posicion] = par;
+    res->cantidad++;
+}
+
+
+// buscar_rec
+// busca recursivamente los pares con llave en [l, u], partiendo desde un nodo del archivo.
+// revisa los pares del nodo (sea hoja o interno) y baja a los hijos que pueden tener llaves en el rango.
+// archivo: archivo binario abierto para lectura
+// pos: posición del nodo en el archivo
+// l: inicio del rango
+// u: fin del rango
+// res: resultado donde se agregan los pares encontrados
+// lecturas: contador de lecturas
+void buscar_rec(FILE* archivo, int pos, int l, int u, Resultado* res, long long* lecturas){
+    NodoBtree nodo = leer_nodo_archivo(archivo, pos, lecturas);
+
+    for(int i = 0; i <= nodo.k -1; i++){
+        if(l <= nodo.llaves_valores[i].llave && nodo.llaves_valores[i].llave <= u){
+            agregar_resultado(res, nodo.llaves_valores[i]);
+        }
+    }
+
+    if(nodo.es_interno){
+        for(int i = 0; i <= nodo.k; i++){
+            if(debo_bajar(nodo, i, l, u)){
+                buscar_rec(archivo, nodo.hijos[i], l, u, res, lecturas);
+            }
+        }
+    }
+}
+
+
+// buscar_rango
+// busca todos los pares con llave en [l, u], leyendo el árbol desde un archivo binario.
+// nombre_archivo: archivo donde se guardó el árbol (con guardar_btree)
+// l: inicio del rango
+// u: fin del rango
+// lecturas: contador de lecturas, se le suma la cantidad de nodos leídos
+// retorna: los pares encontrados (se deben liberar con liberar_resultado)
+Resultado buscar_rango(const char* nombre_archivo, int l, int u, long long* lecturas){
+    FILE* archivo = fopen(nombre_archivo,"rb");
+    Resultado res;
+    res.cantidad = 0;
+    res.capacidad = 0;
+    res.pares = NULL;
+
+    buscar_rec(archivo, 0, l, u, &res, lecturas);
+    fclose(archivo);
+
+    return res;
+
+}
+
+// liberar_btree
+// libera toda la memoria del árbol (el arreglo de nodos y el struct).
+// btree: puntero al árbol
+void liberar_btree(Btree* btree){
+    free(btree->nodos);
+    free(btree);
+}
+
+// liberar_resultado
+// libera el arreglo de pares de un resultado de búsqueda.
+// res: puntero al resultado
+void liberar_resultado(Resultado* res){
+    free(res->pares);
 }
