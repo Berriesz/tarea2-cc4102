@@ -113,3 +113,124 @@ ParLlaveValor split(NodoBtree nodo_lleno, NodoBtree* izq, NodoBtree* der){
     
     return nodo_lleno.llaves_valores[mediano];
 }
+
+/// Incersión de un par en nodo 3.4.2 ///
+
+// insertar_en_nodo
+
+void insertar_en_nodo(NodoBtree* nodo, ParLlaveValor par){
+
+    int i = nodo->k - 1;
+
+    while( i >= 0 && nodo->llaves_valores[i].llave > par.llave ){
+        nodo->llaves_valores[i+1] = nodo->llaves_valores[i];
+        i--;
+    }
+
+    nodo->llaves_valores[i+1] = par;
+    nodo->k += 1;
+
+}
+
+// buscar hijo
+// Recibe el nodo interno y la llave a insertar, y devuelve el índice del hijo al que hay que bajar.
+
+int buscar_hijo(NodoBtree nodo, int llave){
+
+    int i = 0;
+
+    while( i < nodo.k && nodo.llaves_valores[i].llave < llave ){
+        i++;
+    }
+
+    return i;
+
+
+}
+// insertar_en_padre: inserta en el padre el mediano despues del split
+// padre: el nodo interno que recibe el mediano.
+// i: el índice que dio buscar_hijo, ahi queda el mediano
+// mediano: el par que devolvió split, debe subir al padre
+// pos_der: el estante donde quedó el nodo derecho (lo que devolvió agregar_nodo).
+void insertar_en_padre(NodoBtree* padre, int i, ParLlaveValor mediano, int pos_der){
+
+    
+    for(int j = padre->k -1 ; j >= i ; j--){
+        padre->llaves_valores[j+1] = padre->llaves_valores[j];
+    }
+
+    padre->llaves_valores[i] = mediano;
+
+    for(int j = padre->k; j >= i +1; j--){
+        padre->hijos[j+1] = padre->hijos[j];
+    }
+
+    padre->hijos[i + 1] = pos_der;
+    padre->k++;
+
+}
+
+
+void insertar_rec(Btree* btree, int pos, NodoBtree nodo, ParLlaveValor par){
+
+    if(!nodo.es_interno){
+        insertar_en_nodo(&nodo, par);
+        escribir_nodo(btree, pos, nodo);
+        return;
+    }
+
+    int i = buscar_hijo(nodo, par.llave);
+    int pos_hijo = nodo.hijos[i];
+    NodoBtree hijo = leer_nodo(btree, pos_hijo);
+
+    if(hijo.k != B){
+        insertar_rec(btree, pos_hijo, hijo, par);
+        return;
+    }
+
+    NodoBtree izq, der;
+    ParLlaveValor mediano = split(hijo, &izq, &der);
+    escribir_nodo(btree, pos_hijo, izq);
+    int pos_der = agregar_nodo(btree, der);
+    insertar_en_padre(&nodo, i , mediano, pos_der);
+    escribir_nodo(btree, pos, nodo);
+
+    if(par.llave <= mediano.llave){
+        insertar_rec(btree, pos_hijo, izq, par);
+    }else{
+        insertar_rec(btree, pos_der, der, par);
+    }
+    
+}
+
+void insertar(Btree* btree, ParLlaveValor par){
+
+    NodoBtree raiz = leer_nodo(btree, 0);
+
+    if(raiz.k != B){
+        insertar_rec(btree, 0, raiz, par);
+        return;
+    }
+
+    NodoBtree izq, der;
+    ParLlaveValor mediano = split(raiz, &izq, &der);
+    int pos_izq = agregar_nodo(btree, izq);
+    int pos_der = agregar_nodo(btree, der);
+
+    NodoBtree nueva_raiz;
+
+    nueva_raiz.es_interno = 1;
+    nueva_raiz.k = 1;
+    nueva_raiz.padding = 0;
+    nueva_raiz.llaves_valores[0] = mediano;
+    nueva_raiz.hijos[0] = pos_izq;
+    nueva_raiz.hijos[1] = pos_der;
+    escribir_nodo(btree, 0, nueva_raiz);
+
+    if(par.llave <= mediano.llave){
+        insertar_rec(btree, pos_izq, izq, par);
+    }else{
+        insertar_rec(btree, pos_der, der, par);
+    }
+
+}

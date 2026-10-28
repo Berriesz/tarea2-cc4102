@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-#define B 340 // se puede cambiar para probar arboles chicos!!
+#define B 4 // se puede cambiar para probar arboles chicos!!
 #define INCREMENTO_CAPACIDAD 1024
 
 // Par llave-valor:
@@ -39,4 +39,9 @@ void escribir_nodo(Btree* btree, int i, NodoBtree nodo);
 int agregar_nodo(Btree* btree, NodoBtree nodo);
 ParLlaveValor split(NodoBtree nodo_lleno, NodoBtree* izq, NodoBtree* der);
 
+void insertar_en_nodo(NodoBtree* nodo, ParLlaveValor par);
+int buscar_hijo(NodoBtree nodo, int llave);
+void insertar_en_padre(NodoBtree* padre, int i, ParLlaveValor mediano, int pos_der);
+void insertar_rec(Btree* btree, int pos, NodoBtree nodo, ParLlaveValor par);
+void insertar(Btree* btree, ParLlaveValor par);
 #endif
