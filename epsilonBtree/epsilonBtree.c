@@ -357,3 +357,48 @@ void insertar_bepsTree(BepsTree* bepsTree, int llave, float valor, double alpha)
     insertar_par_ordenado(R.buffer, &R.k_buffer, par);
     escribir_nodo(bepsTree, 0, R);
 }
+
+// buscar_rango
+// Busca todos los elementos en un rango de valores
+// bepsTree: arbol en el que buscar los elementos
+// l,u : rango de la busqueda 
+ParLlaveValor* buscar_rango(BepsTree* bepsTree, int l, int u) {
+
+    NodoBepsTree A = leer_nodo(bepsTree, 0);
+    ParLlaveValor* resultado = (ParLlaveValor*)malloc(sizeof(ParLlaveValor) * lmax);
+    int idx_resultado = 0;
+
+    if (!A.es_interno) { // El nodo es hoja, revisa su buffer y agrega los pares que estén en el rango al resultado
+        for (int i = 0; i < A.k_buffer; i++) {
+            if (A.buffer[i].llave >= l && A.buffer[i].llave <= u) {
+                resultado[idx_resultado++] = A.buffer[i];
+            }
+        }
+    } else { // El nodo es interno
+        for (int i = 0; i <= A.k_llaves; i++) { // pasa por cada hijo del nodo
+            int hijo_idx = A.hijos[i];|
+            NodoBepsTree hijo = leer_nodo(bepsTree, hijo_idx);
+            if (hijo.es_interno) { // Si el hijo es interno, revisa sus llaves divisorias
+                if (i == 0 || A.llaves[i - 1] <= u) { // Verifica si el rango del hijo puede contener llaves en [l, u]
+                    ParLlaveValor* subresultado = buscar_rango(bepsTree, l, u);
+                    for (int j = 0; j < lmax && subresultado[j].llave != 0; j++) {
+                        resultado[idx_resultado++] = subresultado[j];
+                    }
+                    free(subresultado);
+                }
+            } else { // Si el hijo es hoja, revisa su buffer
+                for (int j = 0; j < hijo.k_buffer; j++) {
+                    if (hijo.buffer[j].llave >= l && hijo.buffer[j].llave <= u) {
+                        resultado[idx_resultado++] = hijo.buffer[j];
+                    }
+                }
+            }
+        }
+
+    }
+    return resultado;
+}
+
+
+
+
