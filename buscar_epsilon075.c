@@ -60,17 +60,6 @@ int main(int argc, char *argv[]) {
 
     fclose(archivo);
 
-    printf("Tamano de nodo: %zu bytes\n", sizeof(NodoBepsTree));
-    printf("Nodos cargados: %d\n", t->cantidad_nodos);
-    printf("Raiz: es_interno=%d, llaves=%d, buffer=%d\n",
-           t->nodos[0].es_interno,
-           t->nodos[0].k_llaves,
-           t->nodos[0].k_buffer);
-
-    printf("Primer hijo: %d\n", t->nodos[0].hijos[0]);
-    printf("Ultimo hijo: %d\n",
-           t->nodos[0].hijos[t->nodos[0].k_llaves]);
-
     for (int i = 0; i <= t->nodos[0].k_llaves; i++) {
         int hijo = t->nodos[0].hijos[i];
 
@@ -84,10 +73,6 @@ int main(int argc, char *argv[]) {
     printf("Iniciando busqueda [%d, %d]\n", l, u);
 
     int cantidad = buscar_rango(t, l, u, &resultados);
-
-    printf("Lecturas realizadas: %ld\n", t->lecturas);
-    printf("Cantidad de nodos: %d\n", t->cantidad_nodos);
-    printf("Resultado de busqueda: %d\n", cantidad);
 
     printf("Busqueda terminada: %d\n", cantidad);
 

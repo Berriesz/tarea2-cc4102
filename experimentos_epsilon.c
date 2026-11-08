@@ -236,18 +236,7 @@ int main(int argc, char* argv[]) {
             escrituras_promedio
         );
 
-        printf("N = %d terminado\n", N);
-        printf("Tiempo insercion: %.4f segundos\n", tiempo_insercion);
-        printf("Lecturas insercion: %lld\n", lecturas_insercion);
-        printf("Escrituras insercion: %lld\n", escrituras_insercion);
-        printf("Nodos: %d\n", t->cantidad_nodos);
-        printf("Tamano: %lld bytes\n", tamano);
-        printf("Tiempo promedio busqueda: %.6f segundos\n",
-               tiempo_promedio);
-        printf("Lecturas promedio busqueda: %.2f\n",
-               lecturas_promedio);
-        printf("Escrituras promedio busqueda: %.2f\n\n",
-               escrituras_promedio);
+       
 
         liberar_bepsTree(t);
     }

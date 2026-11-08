@@ -67,11 +67,6 @@ int main() {
 
         fflush(resultados);
 
-        printf("N = %d terminado\n", N);
-        printf("Tiempo: %.4f segundos\n", tiempo);
-        printf("Lecturas: %lld\n", btree->lecturas);
-        printf("Escrituras: %lld\n", btree->escrituras);
-        printf("Nodos: %d\n\n", btree->cantidad_nodos);
 
         liberar_btree(btree);
     }

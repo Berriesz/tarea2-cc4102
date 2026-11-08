@@ -451,7 +451,6 @@ static int buscar_rango_rec(
             return 0;
         }
     }
-
     return 1;
 }
 
@@ -469,7 +468,6 @@ int buscar_rango(
     if (t == NULL || resultados == NULL || l > u) {
         return -1;
     }
-
     *resultados = NULL;
     int cantidad = 0;
     int capacidad = 0;
@@ -481,6 +479,5 @@ int buscar_rango(
         *resultados = NULL;
         return -1;
     }
-
     return cantidad;
 }

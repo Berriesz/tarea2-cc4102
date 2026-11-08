@@ -317,20 +317,7 @@ int procesar_tamano(int N, int l, int u) {
         }
     }
 
-    printf("\nComparacion de resultados:\n");
-
-    printf("B-tree vs Bε (0.25): %s\n",
-           iguales_btree_epsilon(&rb, r25, cantidad25)
-           ? "CORRECTO" : "DIFERENTES");
-
-    printf("B-tree vs Bε (0.75): %s\n",
-           iguales_btree_epsilon(&rb, r75, cantidad75)
-           ? "CORRECTO" : "DIFERENTES");
-
-    printf("Bε (0.25) vs Bε (0.75): %s\n",
-           iguales_epsilon(r25, cantidad25, r75, cantidad75)
-           ? "CORRECTO" : "DIFERENTES");
-
+ 
     int guardado = guardar_btree_datos(archivo_btree, &rb);
     guardado = guardar_epsilon_datos(archivo_025, r25, cantidad25) && guardado;
     guardado = guardar_epsilon_datos(archivo_075, r75, cantidad75) && guardado;
