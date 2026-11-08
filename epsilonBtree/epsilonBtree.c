@@ -362,43 +362,113 @@ void insertar_bepsTree(BepsTree* bepsTree, int llave, float valor, double alpha)
 // Busca todos los elementos en un rango de valores
 // bepsTree: arbol en el que buscar los elementos
 // l,u : rango de la busqueda 
-ParLlaveValor* buscar_rango(BepsTree* bepsTree, int l, int u) {
+static int agregar_resultado(
+    ParLlaveValor** resultados,
+    int* cantidad,
+    int* capacidad,
+    ParLlaveValor par
+) {
+    if (*cantidad == *capacidad) {
+        int nueva_capacidad = (*capacidad == 0) ? 16 : (*capacidad * 2);
 
-    NodoBepsTree A = leer_nodo(bepsTree, 0);
-    ParLlaveValor* resultado = (ParLlaveValor*)malloc(sizeof(ParLlaveValor) * lmax);
-    int idx_resultado = 0;
+        ParLlaveValor* nuevo = realloc(
+            *resultados,
+            sizeof(ParLlaveValor) * nueva_capacidad
+        );
 
-    if (!A.es_interno) { // El nodo es hoja, revisa su buffer y agrega los pares que estén en el rango al resultado
-        for (int i = 0; i < A.k_buffer; i++) {
-            if (A.buffer[i].llave >= l && A.buffer[i].llave <= u) {
-                resultado[idx_resultado++] = A.buffer[i];
-            }
-        }
-    } else { // El nodo es interno
-        for (int i = 0; i <= A.k_llaves; i++) { // pasa por cada hijo del nodo
-            int hijo_idx = A.hijos[i];|
-            NodoBepsTree hijo = leer_nodo(bepsTree, hijo_idx);
-            if (hijo.es_interno) { // Si el hijo es interno, revisa sus llaves divisorias
-                if (i == 0 || A.llaves[i - 1] <= u) { // Verifica si el rango del hijo puede contener llaves en [l, u]
-                    ParLlaveValor* subresultado = buscar_rango(bepsTree, l, u);
-                    for (int j = 0; j < lmax && subresultado[j].llave != 0; j++) {
-                        resultado[idx_resultado++] = subresultado[j];
-                    }
-                    free(subresultado);
-                }
-            } else { // Si el hijo es hoja, revisa su buffer
-                for (int j = 0; j < hijo.k_buffer; j++) {
-                    if (hijo.buffer[j].llave >= l && hijo.buffer[j].llave <= u) {
-                        resultado[idx_resultado++] = hijo.buffer[j];
-                    }
-                }
-            }
+        if (nuevo == NULL) {
+            return 0;
         }
 
+        *resultados = nuevo;
+        *capacidad = nueva_capacidad;
     }
-    return resultado;
+
+    (*resultados)[*cantidad] = par;
+    (*cantidad)++;
+
+    return 1;
 }
 
+static int buscar_rango_rec(
+    BepsTree* t,
+    int indice,
+    int l,
+    int u,
+    ParLlaveValor** resultados,
+    int* cantidad,
+    int* capacidad
+) {
+    NodoBepsTree nodo = leer_nodo(t, indice);
 
+    // Revisar el buffer del nodo, sea interno o una hoja.
+    for (int i = 0; i < nodo.k_buffer; i++) {
+        if (nodo.buffer[i].llave >= l && nodo.buffer[i].llave <= u) {
+            if (!agregar_resultado(
+                resultados, cantidad, capacidad, nodo.buffer[i]
+            )) {
+                fprintf(stderr, "ERROR: no se pudo agregar un resultado\n");
+                return 0;
+            }
+        }
+    }
 
+    // Si es una hoja, no tiene hijos que recorrer.
+    if (!nodo.es_interno) {
+        return 1;
+    }
 
+    // Revisar los hijos cuyos intervalos pueden intersectar [l, u].
+    for (int i = 0; i <= nodo.k_llaves; i++) {
+        if (i > 0 && nodo.llaves[i - 1] > u) {
+            continue;
+        }
+
+        if (i < nodo.k_llaves && nodo.llaves[i] < l) {
+            continue;
+        }
+
+        int hijo = nodo.hijos[i];
+
+        if (hijo < 0 || hijo >= t->cantidad_nodos) {
+            fprintf(stderr,
+                "ERROR: hijo invalido. indice=%d, cantidad_nodos=%d\n",
+                hijo, t->cantidad_nodos);
+            return 0;
+        }
+
+        if (!buscar_rango_rec(
+            t, hijo, l, u, resultados, cantidad, capacidad
+        )) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+int buscar_rango(
+    BepsTree* t,
+    int l,
+    int u,
+    ParLlaveValor** resultados
+) {
+    if (t == NULL || resultados == NULL || l > u) {
+        return -1;
+    }
+
+    *resultados = NULL;
+
+    int cantidad = 0;
+    int capacidad = 0;
+
+    if (!buscar_rango_rec(
+        t, 0, l, u, resultados, &cantidad, &capacidad
+    )) {
+        free(*resultados);
+        *resultados = NULL;
+        return -1;
+    }
+
+    return cantidad;
+}

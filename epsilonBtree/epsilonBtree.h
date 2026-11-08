@@ -57,5 +57,6 @@ Resultado split_buffer_hoja(NodoBepsTree nodo_lleno);
 Resultado split_nodo_interno(NodoBepsTree nodo_lleno);
 int vaciar_buffer_nodo_interno(BepsTree* t, NodoBepsTree* V, double alpha);
 void insertar_bepsTree(BepsTree* t, int llave, float valor, double alpha);
- 
+int verificar_arbol(BepsTree* t, int N);
+int buscar_rango(BepsTree* t, int l, int u, ParLlaveValor** resultados);
 #endif
