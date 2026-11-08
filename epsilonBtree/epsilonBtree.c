@@ -358,10 +358,12 @@ void insertar_bepsTree(BepsTree* bepsTree, int llave, float valor, double alpha)
     escribir_nodo(bepsTree, 0, R);
 }
 
-// buscar_rango
-// Busca todos los elementos en un rango de valores
-// bepsTree: arbol en el que buscar los elementos
-// l,u : rango de la busqueda 
+// agregar_resultado
+// Agrega un par llave-valor al arreglo de resultados.
+// resultados: arreglo donde se guardan los resultados
+// cantidad: cantidad de elementos almacenados
+// capacidad: capacidad actual del arreglo
+// par: elemento que se desea agregar
 static int agregar_resultado(
     ParLlaveValor** resultados,
     int* cantidad,
@@ -375,11 +377,9 @@ static int agregar_resultado(
             *resultados,
             sizeof(ParLlaveValor) * nueva_capacidad
         );
-
         if (nuevo == NULL) {
             return 0;
         }
-
         *resultados = nuevo;
         *capacidad = nueva_capacidad;
     }
@@ -390,6 +390,14 @@ static int agregar_resultado(
     return 1;
 }
 
+// buscar_rango_rec
+// Busca recursivamente todos los elementos dentro de un rango.
+// t: arbol en el que buscar los elementos
+// indice: indice del nodo que se revisara
+// l,u: limites del rango de busqueda
+// resultados: arreglo donde se guardan los resultados
+// cantidad: cantidad de elementos encontrados
+// capacidad: capacidad actual del arreglo de resultados
 static int buscar_rango_rec(
     BepsTree* t,
     int indice,
@@ -447,6 +455,11 @@ static int buscar_rango_rec(
     return 1;
 }
 
+// buscar_rango
+// Busca todos los elementos en un rango de valores.
+// t: arbol en el que buscar los elementos
+// l,u: limites del rango de busqueda
+// resultados: arreglo donde se almacenan los elementos encontrados
 int buscar_rango(
     BepsTree* t,
     int l,
@@ -458,7 +471,6 @@ int buscar_rango(
     }
 
     *resultados = NULL;
-
     int cantidad = 0;
     int capacidad = 0;
 
